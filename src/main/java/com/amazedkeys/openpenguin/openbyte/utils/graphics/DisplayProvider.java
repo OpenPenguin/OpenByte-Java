@@ -31,9 +31,12 @@ public class DisplayProvider extends JFrame {
 
         this.add(this.rasterWindow);
 
-        this.setSize(800, 800);
+        int width = 1000;
+        int height = 312;
+
+        this.setSize(width, height);
         this.pack();
-        this.setSize(800, 800);
+        this.setSize(width, height);
         this.setVisible(true);
     }
 

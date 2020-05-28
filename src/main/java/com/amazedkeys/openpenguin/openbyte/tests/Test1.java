@@ -9,7 +9,7 @@ import com.amazedkeys.openpenguin.openbyte.utils.types.Vector2;
 
 public class Test1 {
     public static void main(String[] args) {
-        PixelRasterView pixelview = new PixelRasterView(Tiers.TIER_THREE);
+        PixelRasterView pixelview = new PixelRasterView(Tiers.TIER_TWO);
         Vector2 res = pixelview.getResolution();
 
         for (int y = 0; y < res.getY(); y++) {
