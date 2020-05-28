@@ -1,0 +1,40 @@
+; Get the dimensions
+mov $AH, 3
+int 0x10
+mov $DH, $BH
+mov $IH, $CH
+
+; Clear our 'variable' registers
+mov $DH, 0  ; Set the switch
+mov $BH, 0  ; Set X
+mov $CH, 0  ; Set Y
+
+loop:
+comp $DH, 0
+jeq state_2
+mov $EH, 255
+jmp draw
+
+state_2:
+mov $EH, 0
+
+draw:
+mov $FH, $EH
+mov $GH, $EH
+mov $AH, 1
+int 0x10
+not $DH
+add $BH, 1
+comp $BH, $DH
+jgt next_row
+jmp loop
+
+next_row:
+mov $BH, 0
+add $CH, 1
+comp $CH, $IH
+jgt done
+jmp loop
+
+done:
+hlt

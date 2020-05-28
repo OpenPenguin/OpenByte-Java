@@ -1,0 +1,88 @@
+0x00    null
+
+0x01:   int(literal)
+0x02:   int(register)
+
+0x03:   mov(register <- literal)
+0x04:   mov(register <- register)
+0x05:   mov(register <- memory)
+0x06:   mov(memory <- register)
+
+0x07:   comp(literal, literal)
+0x08:   comp(register, literal)
+0x09:   comp(register, register)
+
+0x0A:   jeq(literal)
+0x0B:   jeq(register)
+
+0x0C:   jlt(literal)
+0x0D:   jlt(register)
+
+0x0E:   jgt(literal)
+0x0F:   jgt(register)
+
+0x10:   jneq(literal)
+0x11:   jneq(register)
+
+0x12:   add(register, literal)
+0x13:   add(register, register)
+
+0x14:   sub(register, literal)
+0x15:   sub(register, register)
+
+0x16:   mul(register, literal)
+0x17:   mul(register, register)
+
+0x18:   div(register, literal)
+0x19:   div(register, register)
+
+0x1A:   pow(register, literal)
+0x1B:   pow(register, register)
+
+0x1C:   and(register, literal)
+0x1D:   and(register, register)
+
+0x1E:   or(register, literal)
+0x1F:   or(register, register)
+
+0x20:   nor(register, literal)
+0x21:   nor(register, register)
+
+0x22:   xor(register, literal)
+0x23:   xor(register, register)
+
+0x24:   not(register)
+0x25:   halt()
+
+0x26:   lshift(register, literal)
+0x27:   lshift(register, register)
+0x28:   INOP
+0x29:   INOP
+
+0x2A:   rshift(register, literal)
+0x2B:   rshift(register, register)
+0x2C:   INOP
+0x2D:   INOP
+
+0x2E:   jgteq(literal)  # Jump Greater Than or Equal To
+0x2F:   jgteq(register)
+0x30:   jlteq(literal)  # Jump Less Than or Equal To
+0x31:   jlteq(register)
+
+0x32:   lshift_carry(register, literal)
+0x33:   lshift_carry(register, register)
+0x34:   INOP
+0x35:   INOP
+
+0x36:   rshift_carry(register, literal)
+0x37:   rshift_carry(register, register)
+0x38:   INOP
+0x39:   INOP
+
+0x3A:   jmp(literal)
+0x3B:   jmp(register)
+
+0x3C:   call(literal)
+0x3D:   call(register)
+
+0x3E:   ret()
