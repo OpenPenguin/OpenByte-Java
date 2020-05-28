@@ -11,7 +11,7 @@ public class Processor {
     private PixelRasterView mainDisplay;
     private DisplayProvider gpu;
 
-    private static final int cycle_delay_period = 1;
+    private static final int cycle_delay_period = 0;
 
     private int flags = 0;
     private int[] registers;
