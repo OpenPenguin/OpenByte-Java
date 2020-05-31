@@ -7,14 +7,16 @@ import com.amazedkeys.openpenguin.openbyte.utils.shared.Maths;
 import com.amazedkeys.openpenguin.openbyte.utils.types.Vector2;
 
 public class Processor {
-    private StorageDevice bootDisk, memory;
-    private PixelRasterView mainDisplay;
-    private DisplayProvider gpu;
+    protected StorageDevice bootDisk, memory;
+    protected PixelRasterView mainDisplay;
+    protected DisplayProvider gpu;
 
-    private static final int cycle_delay_period = 0;
+    protected InterruptHandler ih;
 
-    private int flags = 0;
-    private int[] registers;
+    protected static final int cycle_delay_period = 0;
+
+    protected int flags = 0;
+    protected int[] registers;
     /*
         REGISTERS:
             - 0: AH
@@ -33,11 +35,11 @@ public class Processor {
             - D: FR - Flag Register
      */
 
-    private int instruction, argument_1, argument_2;
-    private boolean carry;
-    private boolean isRunning;
+    protected int instruction, argument_1, argument_2;
+    protected boolean carry;
+    protected boolean isRunning;
 
-    private boolean comparison_equal, comparison_greater_than, comparison_less_than;
+    protected boolean comparison_equal, comparison_greater_than, comparison_less_than;
 
     public Processor(StorageDevice memory, StorageDevice bootDisk, PixelRasterView mainDisplay, DisplayProvider gpu) {
         this.memory = memory;
@@ -46,9 +48,11 @@ public class Processor {
         this.gpu = gpu;
 
         this.registers = new int[0xE];
+
+        this.ih = new InterruptHandler(this);
+
         setup_system_default();
     }
-
     private void setup_system_default() {
         this.registers[8] = 0;
         this.registers[4] = this.memory.getCapacity() - 1;
@@ -61,7 +65,6 @@ public class Processor {
         this.memory.writeByte(this.registers[4], value);
         this.registers[4] = this.registers[4] - 1;
     }
-
     protected int stack_pop() {
         if (this.registers[4] == this.registers[5]) {
             return 0;
@@ -71,12 +74,10 @@ public class Processor {
             return value;
         }
     }
-
     protected void stack_push_all() {
         for (int i=0; i<this.registers.length; i++)
             stack_push(this.registers[i]);
     }
-
     protected void stack_pop_all() {
         for (int i=0; i<this.registers.length; i++)
             this.registers[i] = stack_pop();
@@ -84,44 +85,8 @@ public class Processor {
 
     // Command handlers
     protected void interrupt_handler() {
-        int int_id = argument_1;
-
-        if (int_id == 0x10) {
-            // Graphics Interrupt
-            if (this.registers[0] == 0x1) {
-                // Set Pixel
-                Vector2 resolution = this.mainDisplay.getResolution();
-
-                int x = this.registers[0x1]; // BH
-                int y = this.registers[0x2]; // CH
-                int r = this.registers[0x9]; // EH
-                int g = this.registers[0xA]; // FH
-                int b = this.registers[0xB]; // GH
-
-                if (x >= resolution.getX()) {
-                    System.out.println("GPU_OVER_X");
-                }
-                if (y >= resolution.getY()) {
-                    System.out.println("GPU_OVER_Y");
-                }
-
-                if (x < resolution.getX() && y < resolution.getY()) {
-                    this.mainDisplay.setRGB(x, y, r, g, b);
-                }
-                this.gpu.updateRaster();
-            } else if (this.registers[0] == 0x2) {
-                // Get Pixel
-                //TODO
-            } else if (this.registers[0] == 0x03) {
-                // Get resolution
-                Vector2 resolution = this.mainDisplay.getResolution();
-                this.registers[1] = (int) resolution.getX();
-                this.registers[2] = (int) resolution.getY();
-            }
-        }
-
+        this.ih.throw_interrupt();
     }
-
     protected void run_comparison() {
         comparison_equal = false;
         comparison_greater_than = false;
@@ -141,7 +106,6 @@ public class Processor {
                 ((comparison_equal) ? "E" : "")
         );
     }
-
     protected void jump_if_equal() {
         if (comparison_equal) {
             this.registers[8] = argument_1;
@@ -151,7 +115,6 @@ public class Processor {
             this.registers[8] = this.registers[8] + 2;
         }
     }
-
     protected void jump_if_not_equal() {
         if (!comparison_equal) {
             this.registers[8] = argument_1;
@@ -161,7 +124,6 @@ public class Processor {
             this.registers[8] = this.registers[8] + 2;
         }
     }
-
     protected void jump_if_greater_than() {
         if (comparison_greater_than) {
             this.registers[8] = argument_1;
@@ -171,7 +133,6 @@ public class Processor {
             this.registers[8] = this.registers[8] + 2;
         }
     }
-
     protected void jump_if_less_than() {
         if (comparison_less_than) {
             this.registers[8] = argument_1;
@@ -181,7 +142,6 @@ public class Processor {
             this.registers[8] = this.registers[8] + 2;
         }
     }
-
     protected void jump_if_greater_than_or_equal_to() {
         if (comparison_greater_than || comparison_equal) {
             this.registers[8] = argument_1;
@@ -191,7 +151,6 @@ public class Processor {
             this.registers[8] = this.registers[8] + 2;
         }
     }
-
     protected void jump_if_less_than_or_equal_to() {
         if (comparison_less_than || comparison_equal) {
             this.registers[8] = argument_1;
@@ -206,43 +165,33 @@ public class Processor {
     protected void add() {
         this.registers[argument_1] = this.registers[argument_1] + argument_2;
     }
-
     protected void subtract() {
         this.registers[argument_1] = this.registers[argument_1] - argument_2;
     }
-
     protected void multiply() {
         this.registers[argument_1] = this.registers[argument_1] * argument_2;
     }
-
     protected void divide() {
         this.registers[argument_1] = this.registers[argument_1] / argument_2;
     }
-
     protected void pow() {
         this.registers[argument_1] = this.registers[argument_1] ^ argument_2;
     }
-
     protected void and() {
         this.registers[argument_1] = this.registers[argument_1] & argument_2;
     }
-
     protected void or() {
         this.registers[argument_1] = this.registers[argument_1] | argument_2;
     }
-
     protected void nor() {
         this.registers[argument_1] = ~(this.registers[argument_1] | argument_2);
     }
-
     protected void xor() {
         this.registers[argument_1] = (this.registers[argument_1] & argument_2) | (~this.registers[argument_1] & argument_2);
     }
-
     protected void not() {
         this.registers[argument_1] = ~this.registers[argument_1];
     }
-
     protected void lshift() {
         int value = this.registers[argument_1];
         int places = argument_2;
@@ -251,7 +200,6 @@ public class Processor {
         }
         this.registers[argument_1] = value;
     }
-
     protected void rshift() {
         int value = this.registers[argument_1];
         int places = argument_2;
@@ -260,22 +208,18 @@ public class Processor {
         }
         this.registers[argument_1] = value;
     }
-
     protected void jump() {
         this.registers[8] = this.argument_1;
         System.out.println("Branched: " + this.registers[8]);
     }
-
     protected void call() {
         stack_push(this.registers[8] + 2);
         this.registers[8] = this.argument_1;
     }
-
     protected void ret() {
         int ret_addr = stack_pop();
         this.registers[8] = this.argument_1;
     }
-
     protected void next_instr(int arg_count) {
         this.registers[8] = this.registers[8] + (arg_count + 1);
     }
@@ -293,11 +237,9 @@ public class Processor {
             this.memory.writeByte(i, this.bootDisk.readByte(i));
         }
     }
-
     public void step() {
         execute_instruction();
     }
-
     public void run() {
         try {
             while (this.isRunning) {
@@ -377,8 +319,8 @@ public class Processor {
 
     protected void execute_instruction() {
         int exaddr = this.registers[8];
+        int a1, a2;
         instruction = this.memory.readByte(exaddr);
-
         System.out.println("Executing instruction (" + instruction + " : \"" + instruction_names[instruction] + "\") @ "  + exaddr);
 
         switch(instruction) {
@@ -667,6 +609,36 @@ public class Processor {
                 break;
             case 0x3E:
                 ret();
+                break;
+            case 0x40: // LDM_RL
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.registers[a1] = this.memory.readByte(a2);
+                break;
+            case 0x41: // LDM_RR
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.registers[a1] = this.memory.readByte(this.registers[a2]);
+                break;
+            case 0x42: // SVM_RL
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.memory.writeByte(this.registers[a1], a2);
+                break;
+            case 0x43: // SVM_RR
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.memory.writeByte(this.registers[a1], this.registers[a2]);
+                break;
+            case 0x44: // SVM_LL
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.memory.writeByte(a1, a2);
+                break;
+            case 0x45: // SVM_LR
+                a1 = this.memory.readByte(exaddr + 1);
+                a2 = this.memory.readByte(exaddr + 2);
+                this.memory.writeByte(a1, this.registers[a2]);
                 break;
         }
 

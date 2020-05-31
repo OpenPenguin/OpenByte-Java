@@ -86,3 +86,11 @@
 0x3D:   call(register)
 
 0x3E:   ret()
+0x3F    INOP
+
+0x40:   LDM(register, literal)
+0x41:   LDM(register, register)
+0x42:   SVM(register, literal)
+0x43:   SVM(register, register)
+0x44:   SVM(literal, literal)
+0x45:   SVM(literal, register)
